@@ -115,7 +115,7 @@ void WFclass::softAP(const String ssid, const String password)
   myIP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(myIP);
-  Serial.print(" MAC: ");
+  Serial.print("MAC: ");
   Serial.println(WiFi.macAddress());
 }
 
