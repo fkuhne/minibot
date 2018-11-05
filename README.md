@@ -5,6 +5,7 @@ Plataforma robótica móvel construída com base no Wemos D1 Mini (ESP8266) e sh
 ## Referências:
  * https://www.zonamaker.com.br/wemos-d1-mini-introducao-e-primeiros-passos
  * https://wiki.wemos.cc/products:d1_mini_shields:motor_shield
+ * https://circuits4you.com/2016/12/16/esp8266-web-server-html/
 
 ## Dependências:
  * Biblioteca para Aruino do shield WH-648: https://github.com/wemos/WEMOS_Motor_Shield_Arduino_Library (obs.: baixar do GitHub e instalar na pasta Libraries)

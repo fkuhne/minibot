@@ -12,6 +12,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <DNSServer.h>
 
 class WFclass
 {
@@ -19,7 +20,8 @@ class WFclass
     WFclass();
     void connect();
     void connectFromList();
-    void softAP(const String ssid, const String password);
+    IPAddress softAP(const String ssid, const String password = "");
+    IPAddress softAP(const IPAddress ip, const String ssid, const String password = "");
 
   private:
     const char* c_ssid = "";

@@ -3,12 +3,12 @@
 
    Felipe Kühne
    29/10/2018
-
 */
 
-#include <ESP8266mDNS.h>
+#include <DNSServer.h>
 #include <WEMOS_Motor.h>
 #include "wifi.h"
+#include "html/index.h"
 
 const char compile_date[] = __DATE__ " " __TIME__;
 String version("0.0-1");
@@ -21,12 +21,10 @@ Motor M2(0x30, _MOTOR_B, 1000); //Motor B
 
 WFclass wifi;
 ESP8266WebServer server(80);
+DNSServer dnsServer;
 
+IPAddress myIP(192, 168, 1, 1);
 String ssid("minibot");
-String password("minibot");
-String mDnsName("minibot");
-
-String css(".garden {position:relative; width:200px; height:200px; border:5px solid #CCC; border-radius:10px;} .ball {position:absolute; top:90px; left:90px;width:20px; height:20px; background:green; border-radius:100%;}");
 
 void printBanner()
 {
@@ -42,6 +40,8 @@ void printBanner()
 
 void setup()
 {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
   Serial.begin(9600);
   Serial.println("Minibot starting...");
   printBanner();
@@ -51,67 +51,44 @@ void setup()
   Serial.println("Motor A&B STOP");
   delay(200);
 
-  //wifi.connectFromList();
-  wifi.softAP("minibot", "minibot");
+  wifi.softAP(myIP, ssid);
+  dnsServer.start(53, "*", myIP);
 
   /* Registrando as funções de callback para as rotas desejadas: */
   server.on("/", handleRoot); /* Rota raiz. */
-  server.on("/fw", handleFw);
-  server.on("/bw", handleBw);
+  server.onNotFound(handleRoot);  
+  server.on("/run", handleRun);
+  server.on("/stop", handleStop);
   server.on("/left", handleLeft);
   server.on("/right", handleRight);
-  server.on("/stop", handleStop);
   server.on("/orientation", handleOrientation);
 
   /* Finalmente inicializa o servidor webserver, com as configurações feitas. */
   server.begin();
   Serial.println("Servidor HTTP rodando...");
 
-  if(!MDNS.begin("minibot")) Serial.println("Erro ao configurar serviço mDNS.");
-  else Serial.println("mDNS rodando sob o nome " + mDnsName + ".local");
+  digitalWrite(LED_BUILTIN, HIGH);
 }
 
 void loop()
 {
+  dnsServer.processNextRequest();
   server.handleClient();
 }
 
 void handleRoot()
 {
+  digitalWrite(LED_BUILTIN, LOW);
+
   Serial.print("Recebendo requisição de ");
   Serial.println(server.client().remoteIP());
-
-  String webString =
-    "<!DOCTYPE HTML><html><head>"
-    "<meta name='apple-mobile-web-app-capable' content='yes'>"
-    "<style>body{background-color:#4285F4;font-size:60px;font-family:verdana;}</style>"
-    "<style type=\"text/css\">" + css + "</style>"
-    "<script>"
-    "function fw(){window.location.assign('/fw')}"
-    "function bw(){window.location.assign('/bw')}"
-    "function left(){window.location.assign('/left')}"
-    "function right(){window.location.assign('/right')}"
-    "function handleOrientation(event){var x = event.beta; var y=event.gamma;"
-    "output.innerHTML  = \"beta : \" + x + \"\n\";"
-    "output.innerHTML += \"gamma: \" + y + \"\n\";"
-    "if (x >  90) { x =  90}; if (x < -90) { x = -90};"
-    "x += 90; y += 90;}"
-    "window.addEventListener('deviceorientation', handleOrientation);"
-    "</script>"
-    "</head>"
-    "<body><center>"
-    "<div class=\"garden\"><div class=\"ball\"></div></div><pre class=\"output\"></pre>"
-    "<div><bold>Minibot</div></br>"
-    "</br><div>"
-    "<input type='button' style='font-size:80px' value='FW' onmousedown='fw()'></br></br>"
-    "<input type='button' style='font-size:80px' value='BW' onclick='bw()'></div>"
-    "</center></body></html>";
-  server.send(200, "text/html", webString);
+  String s = MAIN_page; //Read HTML contents
+  server.send(200, "text/html", s);
 
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
-void handleFw()
+void handleRun()
 {
   M1.setmotor(_CW, pwmSpeed);
   M2.setmotor(_CW, pwmSpeed);
@@ -148,7 +125,9 @@ void handleStop()
 
 void handleOrientation()
 {
+  Serial.println(server.arg("x"));  
+  Serial.println(server.arg("y"));
   // How to read content from client?
-  handleRoot();
+  //handleRoot();
 }
 
