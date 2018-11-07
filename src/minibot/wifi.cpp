@@ -112,7 +112,13 @@ void WFclass::connectFromList()
 IPAddress WFclass::softAP(const String ssid, const String password)
 {
   WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid.c_str(), password.c_str());
+  WiFi.softAP(ssid.c_str()/*, password.c_str()*/);
+  
+  Serial.print("Criando rede ");
+  Serial.print(ssid);
+  Serial.print(" (pwd: ");
+  if (password.length()) Serial.print(password);
+  Serial.println(")");
   myIP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(myIP);
@@ -126,13 +132,17 @@ IPAddress WFclass::softAP(const IPAddress ip, const String ssid, const String pa
 {
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(ip, ip, IPAddress(255, 255, 255, 0));
-  WiFi.softAP(ssid.c_str()/*, password.c_str()*/);
-  
+  WiFi.softAP(ssid.c_str(), password.c_str());
+  Serial.print("Criando rede ");
+  Serial.print(ssid);
+  Serial.print(" (pwd: ");
+  if (password.length()) Serial.print(password);
+  Serial.println(")");
   myIP = WiFi.softAPIP();
   Serial.print("AP IP address: ");
   Serial.println(myIP);
   Serial.print("MAC: ");
-  Serial.println(WiFi.macAddress());  
+  Serial.println(WiFi.macAddress());
   return myIP;
 }
 
