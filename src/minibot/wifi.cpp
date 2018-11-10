@@ -7,14 +7,19 @@
 */
 
 #include "wifi.h"
-#include <ESP8266mDNS.h>        // Include the mDNS library
 
 /* Contrutor da classe. Não faz nada, só instancia o objeto */
-WFclass::WFclass() {}
+WFclass::WFclass() {
+  /* Read this:
+      https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/generic-class.html?highlight=wifi#persistent */
+  WiFi.persistent(false);
+}
 
 /* Inicia a conexão do cliente Wi-Fi com a rede disponível no local. */
 void WFclass::connect()
 {
+  WiFi.mode(WIFI_STA);
+
   Serial.print("Conectando na rede: ");
   Serial.print(c_ssid);
 
@@ -76,6 +81,8 @@ struct wifinetworks {
 /* Tenta conectar com alguma rede no local, a partir de uma lista pré-definida. */
 void WFclass::connectFromList()
 {
+  WiFi.mode(WIFI_STA);
+
   int wifiListSize = sizeof(wifiNetworks) / sizeof(wifiNetworks[0]);
 
   for (int i = 0; i < wifiListSize; i++)
@@ -112,8 +119,10 @@ void WFclass::connectFromList()
 IPAddress WFclass::softAP(const String ssid, const String password)
 {
   WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid.c_str()/*, password.c_str()*/);
   
+  if (password.length()) WiFi.softAP(ssid.c_str(), password.c_str());
+  else WiFi.softAP(ssid.c_str());
+
   Serial.print("Criando rede ");
   Serial.print(ssid);
   Serial.print(" (pwd: ");
@@ -131,8 +140,12 @@ IPAddress WFclass::softAP(const String ssid, const String password)
 IPAddress WFclass::softAP(const IPAddress ip, const String ssid, const String password)
 {
   WiFi.mode(WIFI_AP);
+  
   WiFi.softAPConfig(ip, ip, IPAddress(255, 255, 255, 0));
-  WiFi.softAP(ssid.c_str(), password.c_str());
+
+  if (password.length()) WiFi.softAP(ssid.c_str(), password.c_str());
+  else WiFi.softAP(ssid.c_str());
+
   Serial.print("Criando rede ");
   Serial.print(ssid);
   Serial.print(" (pwd: ");
