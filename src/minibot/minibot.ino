@@ -9,21 +9,15 @@
 
 #include <WebSocketsServer.h>
 #include <ESP8266mDNS.h>
-#include <WEMOS_Motor.h>
 #include "wifi.h"
 #include "html/index.h"
 
 const char compile_date[] = __DATE__ " " __TIME__;
 String version("0.0-1");
 
-int pwmSpeed = 100;
-double x = 0;
-double y = 0;
+enum robotState {STOPPED = 0, RUNNING};
 
-//Motor shield I2C Address: 0x30
-//PWM frequency: 1000Hz(1kHz)
-Motor M1(0x30, _MOTOR_A, 1000);
-Motor M2(0x30, _MOTOR_B, 1000); //Motor B
+robotState actualState = STOPPED;
 
 WFclass wifi;
 ESP8266WebServer server(80);
@@ -46,6 +40,7 @@ void printBanner()
   Serial.println("| '_ ` _ \\| | '_ \\| | '_ \\ / _ \\| __|");
   Serial.println("| | | | | | | | | | | |_) | (_) | |_");
   Serial.println("|_| |_| |_|_|_| |_|_|_.__/ \\___/ \\__|");
+  Serial.println();
   Serial.println("Version " + version + ", compiled at " + String(compile_date));
   Serial.println();
 }
@@ -58,11 +53,6 @@ void setup()
   Serial.println("Minibot starting...");
   printBanner();
   
-  M1.setmotor(_STOP);
-  M2.setmotor( _STOP);
-  Serial.println("Motor A&B STOP");
-  delay(200);
-
 #if(AP == 1)
   wifi.softAP(myName);
 #else
@@ -80,9 +70,6 @@ void setup()
   server.onNotFound(handleRoot);  
   server.on("/run", handleRun);
   server.on("/stop", handleStop);
-  server.on("/left", handleLeft);
-  server.on("/right", handleRight);
-  server.on("/orientation", handleOrientation);
 
   /* Finalmente inicializa o servidor webserver, com as configurações feitas. */
   server.begin();
@@ -95,6 +82,12 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
   switch (type) {
     case WStype_DISCONNECTED:             // if the websocket is disconnected
       Serial.printf("[%u] Disconnected!\n", num);
+
+      /* Se o cliente websocket (o controle remoto) desconecta-se do robô, o mesmo
+       *  deve desligar-se */
+      actualState = STOPPED;
+      Serial.println("actualState = STOPPED");
+      
       break;
     case WStype_CONNECTED: {              // if a new websocket connection is established
         IPAddress ip = webSocket.remoteIP(num);
@@ -105,7 +98,18 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
       Serial.printf("[%u] get Text: %s\n", num, payload);
       
       /* Parse received data from client. */
-      
+      if(actualState == RUNNING && !strncmp(payload, length, "stop"))
+      {
+        //desliga o robô
+        actualState = STOPPED;
+      Serial.println("actualState = STOPPED");
+      }
+      else if(actualState == STOPPED && !strncmp(payload, length, "run"))
+      {
+        //liga o robô
+        actualState = RUNNING;
+       Serial.println("actualState = RUNNING");
+      } 
       break;
   }
 }
