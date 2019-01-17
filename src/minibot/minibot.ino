@@ -98,13 +98,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
       Serial.printf("[%u] get Text: %s\n", num, payload);
       
       /* Parse received data from client. */
-      if(actualState == RUNNING && !strncmp(payload, length, "stop"))
+      if(actualState == RUNNING && !strncmp((char *)payload, "stop", lenght))
       {
         //desliga o robô
         actualState = STOPPED;
       Serial.println("actualState = STOPPED");
       }
-      else if(actualState == STOPPED && !strncmp(payload, length, "run"))
+      else if(actualState == STOPPED && !strncmp((char *)payload, "run", lenght))
       {
         //liga o robô
         actualState = RUNNING;
@@ -133,36 +133,12 @@ void handleRoot()
 
 void handleRun()
 {
-  M1.setmotor(_CW, pwmSpeed);
-  M2.setmotor(_CW, pwmSpeed);
   //handleRoot();
 }
 
-void handleBw()
-{
-  M1.setmotor(_CCW, pwmSpeed);
-  M2.setmotor(_CCW, pwmSpeed);
-  //handleRoot();
-}
-
-void handleLeft()
-{
-  M1.setmotor(_STOP);
-  M2.setmotor(_CW, pwmSpeed);
-  //handleRoot();
-}
-
-void handleRight()
-{
-  M1.setmotor(_CW, pwmSpeed);
-  M2.setmotor(_STOP);
-  //handleRoot();
-}
 
 void handleStop()
 {
-  M1.setmotor(_STOP);
-  M2.setmotor( _STOP);
   //handleRoot();
 }
 
