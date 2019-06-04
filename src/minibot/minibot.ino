@@ -9,11 +9,15 @@
 
 #include <WebSocketsServer.h>
 #include <ESP8266mDNS.h>
+#include <Servo.h>
 #include "wifi.h"
 #include "html/index.h"
 
 const char compile_date[] = __DATE__ " " __TIME__;
 String version("0.0-1");
+
+const int servo1_pin = D3;
+const int servo2_pin = D5;
 
 enum robotState {STOPPED = 0, RUNNING};
 
@@ -24,6 +28,8 @@ ESP8266WebServer server(80);
 WebSocketsServer webSocket(81);    // create a websocket server on port 81
 
 String myName("minibot");
+
+Servo servo1, servo2;
 
 void printBanner()
 {
@@ -75,7 +81,27 @@ void setup()
   server.begin();
   Serial.println("Serviço HTTP rodando na porta 80.");
 
+  /* Configura servos. */
+  servo1.attach(servo1_pin);
+  servo1.write(90); /* Parado. */
+  servo2.attach(servo2_pin);
+  servo2.write(90); /* Parado. */  
+
   digitalWrite(LED_BUILTIN, HIGH);
+}
+
+void stopRobot()
+{
+  if(servo1.attached()) {
+    servo1.write(90);
+    delay(50);
+    servo1.detach();
+  }
+  if(servo2.attached()) {
+    servo2.write(90);
+    delay(50);
+    servo2.detach();
+  }
 }
 
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght) { // When a WebSocket message is received
